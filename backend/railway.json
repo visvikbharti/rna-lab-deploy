@@ -6,6 +6,7 @@
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 10,
+    "startCommand": "gunicorn rna_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120"
   }
 }
