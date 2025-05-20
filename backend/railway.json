@@ -10,6 +10,7 @@
     "startCommand": "sh /app/docker-entrypoint.sh",
     "healthcheckPath": "/api/health/",
     "healthcheckTimeout": 300,
-    "healthcheckInterval": 10
+    "healthcheckInterval": 10,
+    "healthcheckPort": 8001
   }
 }

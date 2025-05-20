@@ -3,7 +3,12 @@ set -e
 
 # Ensure PORT has a default value if not set
 export PORT=${PORT:-8000}
-echo "Using PORT: $PORT"
+export HEALTH_PORT=8001
+echo "Using PORT: $PORT for Gunicorn and HEALTH_PORT: $HEALTH_PORT for health checks"
+
+# Start the standalone health check server in the background
+python simple_healthcheck.py &
+echo "Started standalone health check server"
 
 # Check and map Railway env vars to our expected env vars
 if [ -n "$DATABASE_URL" ]; then
