@@ -10,15 +10,8 @@ echo "Using PORT: $PORT for Gunicorn and HEALTH_PORT: $HEALTH_PORT for health ch
 echo "Environment variables available:"
 env | grep -v -E 'PASSWORD|SECRET|KEY' | sort
 
-# Start the simple health check server in the background
-echo "Starting standalone health check server on port $HEALTH_PORT"
-python health.py > /tmp/healthcheck.log 2>&1 &
-HEALTH_PID=$!
-echo "Health check server started with PID $HEALTH_PID, logs at /tmp/healthcheck.log"
-
-# Create a netcat health check as backup
-(while true; do nc -l -p 8002 -c 'echo -e "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"status\":\"healthy\"}"'; done) &
-echo "Started netcat backup health check on port 8002"
+# Skip health check servers since we're disabling health checks
+echo "Health checks disabled in Railway configuration"
 
 # Check and map Railway env vars to our expected env vars
 if [ -n "$DATABASE_URL" ]; then
