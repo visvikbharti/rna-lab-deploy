@@ -33,14 +33,24 @@ from .serializers import (
 class HealthCheckView(APIView):
     """
     Simple health check endpoint to verify API is operational.
+    This endpoint should always return 200 OK regardless of database connection.
     """
     permission_classes = [AllowAny]
     
     def get(self, request):
+        try:
+            # Try to get the current time from Django
+            current_time = timezone.now().isoformat()
+        except:
+            # If timezone isn't working, use Python's time
+            import datetime
+            current_time = datetime.datetime.now().isoformat()
+            
         return Response({
             "status": "healthy",
-            "time": timezone.now().isoformat(),
+            "time": current_time,
             "version": "1.0.0",
+            "message": "Health check endpoint is operational"
         })
 
 class QueryView(APIView):
