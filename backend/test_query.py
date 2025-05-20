@@ -7,6 +7,8 @@ import sys
 import argparse
 import requests
 import json
+import time
+import os
 
 
 def test_api_query(api_url, query_text):
@@ -57,18 +59,47 @@ def main():
                         help="The API base URL")
     parser.add_argument("--query", default="What is the protocol for RNA extraction?",
                         help="The query text")
+    parser.add_argument("--repeat", action="store_true",
+                        help="Repeat the query 5 times with different variations")
     
     args = parser.parse_args()
     
-    # Test the query
-    response = test_api_query(args.url, args.query)
-    
-    # Print the response
-    if response:
-        print("API Response:")
-        print(json.dumps(response, indent=2))
+    if args.repeat:
+        # Sample queries about RNA extraction
+        queries = [
+            "What is the protocol for RNA extraction?",
+            "How do I extract RNA from cells?",
+            "What reagents are needed for RNA isolation?",
+            "What are the steps in TRIzol RNA extraction?",
+            "How to prevent RNA degradation during extraction?"
+        ]
+        
+        # Run each query
+        for i, query in enumerate(queries):
+            print(f"\n\n=== Query {i+1}: {query} ===\n")
+            response = test_api_query(args.url, query)
+            
+            # Print the response
+            if response:
+                print("API Response:")
+                print(json.dumps(response, indent=2))
+            else:
+                print("No response received from the API.")
+            
+            # Wait a bit between queries
+            if i < len(queries) - 1:
+                print("\nWaiting for next query...")
+                time.sleep(2)
     else:
-        print("No response received from the API.")
+        # Run a single query
+        response = test_api_query(args.url, args.query)
+        
+        # Print the response
+        if response:
+            print("API Response:")
+            print(json.dumps(response, indent=2))
+        else:
+            print("No response received from the API.")
 
 
 if __name__ == "__main__":

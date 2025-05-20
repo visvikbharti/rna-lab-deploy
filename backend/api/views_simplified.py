@@ -151,42 +151,108 @@ class QueryView(APIView):
                 # Not in cache, continue with query processing
                 pass
         
-        # DEMO: Mock retrieval and answer generation
+        # Attempt real data retrieval, fallback to mock data
         start_time = time.time()
         
-        # Mock results with some dummy content
-        mock_results = [
-            {
-                'content': 'RNA biology involves the study of RNA molecules and their functions in cellular processes.',
-                'metadata': {
-                    'title': 'RNA Biology Fundamentals',
-                    'doc_type': 'paper',
-                    'year': '2023',
-                    'author': 'Sharma et al.'
+        try:
+            # Try to get real data from the database
+            from django.db import connection
+            cursor = connection.cursor()
+            cursor.execute("SELECT id, title, doc_type, author, year FROM api_document LIMIT 10")
+            db_documents = cursor.fetchall()
+            
+            if db_documents:
+                # We have some documents in the database
+                results = []
+                for doc in db_documents:
+                    doc_id, title, doc_type, author, year = doc
+                    
+                    # Get some content from document chunks
+                    cursor.execute(
+                        "SELECT content FROM api_documentchunk WHERE document_id = %s LIMIT 1", 
+                        [doc_id]
+                    )
+                    chunk_result = cursor.fetchone()
+                    content = chunk_result[0] if chunk_result else "Content not available"
+                    
+                    results.append({
+                        'content': content,
+                        'metadata': {
+                            'title': title or "Untitled",
+                            'doc_type': doc_type or "unknown",
+                            'year': year or "2023",
+                            'author': author or "Unknown Author"
+                        }
+                    })
+                
+                print(f"Found {len(results)} documents in the database")
+            else:
+                # No documents found, use mock data
+                print("No documents found in database, using mock data")
+                results = [
+                    {
+                        'content': 'RNA extraction protocols typically involve cell lysis, RNA isolation using reagents like TRIzol, and purification steps to remove contaminants.',
+                        'metadata': {
+                            'title': 'RNA Extraction Protocol',
+                            'doc_type': 'protocol',
+                            'year': '2023',
+                            'author': 'Lab Protocol'
+                        }
+                    },
+                    {
+                        'content': 'PCR protocols require careful temperature control and primer design.',
+                        'metadata': {
+                            'title': 'PCR Protocol Guide',
+                            'doc_type': 'protocol',
+                            'year': '2022',
+                            'author': 'Kumar et al.'
+                        }
+                    },
+                    {
+                        'content': 'CRISPR technologies have revolutionized gene editing capabilities.',
+                        'metadata': {
+                            'title': 'CRISPR Applications',
+                            'doc_type': 'paper',
+                            'year': '2024',
+                            'author': 'Chakraborty et al.'
+                        }
+                    }
+                ]
+        except Exception as e:
+            print(f"Error retrieving documents: {e}")
+            # Fallback to mock data on error
+            results = [
+                {
+                    'content': 'RNA extraction requires careful handling to prevent degradation. TRIzol reagent is commonly used for RNA isolation from cells and tissues.',
+                    'metadata': {
+                        'title': 'TRIzol RNA Extraction',
+                        'doc_type': 'protocol',
+                        'year': '2023',
+                        'author': 'Lab Protocol'
+                    }
+                },
+                {
+                    'content': 'RNA sequencing workflows include library preparation, sequencing, and data analysis steps.',
+                    'metadata': {
+                        'title': 'RNA-Seq Methods',
+                        'doc_type': 'protocol',
+                        'year': '2022',
+                        'author': 'Research Lab'
+                    }
+                },
+                {
+                    'content': 'RNA biology is central to gene expression regulation through various mechanisms.',
+                    'metadata': {
+                        'title': 'RNA Biology Introduction',
+                        'doc_type': 'paper',
+                        'year': '2024',
+                        'author': 'Sharma et al.'
+                    }
                 }
-            },
-            {
-                'content': 'PCR protocols require careful temperature control and primer design.',
-                'metadata': {
-                    'title': 'PCR Protocol Guide',
-                    'doc_type': 'protocol',
-                    'year': '2022',
-                    'author': 'Kumar et al.'
-                }
-            },
-            {
-                'content': 'CRISPR technologies have revolutionized gene editing capabilities.',
-                'metadata': {
-                    'title': 'CRISPR Applications',
-                    'doc_type': 'paper',
-                    'year': '2024',
-                    'author': 'Chakraborty et al.'
-                }
-            }
-        ]
+            ]
         
         # Rerank results
-        reranked_results = self.rerank_results(query_text, mock_results)
+        reranked_results = self.rerank_results(query_text, results)
         
         # Build prompt and generate answer
         prompt = self.build_prompt(query_text, reranked_results)

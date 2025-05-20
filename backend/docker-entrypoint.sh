@@ -93,6 +93,12 @@ python manage.py migrate --noinput || {
   echo "The application may not function properly until database is available."
 }
 
+# Run initialization script to load sample documents
+echo "Running initialization script to load sample documents..."
+python initialize_db.py || {
+  echo "Warning: Initialization script failed but continuing anyway."
+}
+
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
