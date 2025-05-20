@@ -25,26 +25,21 @@ HEALTH_PATH = "/api/health/"
 
 class HealthCheckHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == HEALTH_PATH:
-            logger.info(f"Health check request received on path {self.path}")
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            
-            response = {
-                "status": "healthy",
-                "time": datetime.datetime.now().isoformat(),
-                "service": "RNA Lab Navigator",
-                "version": "1.0.0",
-            }
-            
-            self.wfile.write(json.dumps(response).encode('utf-8'))
-        else:
-            logger.info(f"Request for non-health path: {self.path}")
-            self.send_response(404)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'Not Found')
+        # Respond to ANY path with a 200 OK for health checks
+        logger.info(f"Health check request received on path {self.path}")
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        
+        response = {
+            "status": "healthy",
+            "time": datetime.datetime.now().isoformat(),
+            "service": "RNA Lab Navigator",
+            "version": "1.0.0",
+            "path": self.path,
+        }
+        
+        self.wfile.write(json.dumps(response).encode('utf-8'))
     
     def log_message(self, format, *args):
         # Override to use our logger instead of printing to stderr

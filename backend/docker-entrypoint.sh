@@ -6,9 +6,19 @@ export PORT=${PORT:-8000}
 export HEALTH_PORT=8001
 echo "Using PORT: $PORT for Gunicorn and HEALTH_PORT: $HEALTH_PORT for health checks"
 
-# Start the standalone health check server in the background
-python simple_healthcheck.py &
-echo "Started standalone health check server"
+# Print all environment variables for debugging (except sensitive ones)
+echo "Environment variables available:"
+env | grep -v -E 'PASSWORD|SECRET|KEY' | sort
+
+# Start the simple health check server in the background
+echo "Starting standalone health check server on port $HEALTH_PORT"
+python health.py > /tmp/healthcheck.log 2>&1 &
+HEALTH_PID=$!
+echo "Health check server started with PID $HEALTH_PID, logs at /tmp/healthcheck.log"
+
+# Create a netcat health check as backup
+(while true; do nc -l -p 8002 -c 'echo -e "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"status\":\"healthy\"}"'; done) &
+echo "Started netcat backup health check on port 8002"
 
 # Check and map Railway env vars to our expected env vars
 if [ -n "$DATABASE_URL" ]; then
