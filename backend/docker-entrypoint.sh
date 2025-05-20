@@ -13,6 +13,15 @@ env | grep -v -E 'PASSWORD|SECRET|KEY' | sort
 # Skip health check servers since we're disabling health checks
 echo "Health checks disabled in Railway configuration"
 
+# Add the Railway domain to ALLOWED_HOSTS environment variable
+if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
+  echo "Adding $RAILWAY_PUBLIC_DOMAIN to ALLOWED_HOSTS"
+  export ALLOWED_HOSTS="localhost,127.0.0.1,$RAILWAY_PUBLIC_DOMAIN"
+else
+  echo "RAILWAY_PUBLIC_DOMAIN not found, using default ALLOWED_HOSTS"
+  export ALLOWED_HOSTS="localhost,127.0.0.1,*.railway.app,*.up.railway.app"
+fi
+
 # Check and map Railway env vars to our expected env vars
 if [ -n "$DATABASE_URL" ]; then
   echo "Found DATABASE_URL, extracting connection details"
